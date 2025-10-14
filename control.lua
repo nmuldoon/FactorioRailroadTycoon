@@ -32,11 +32,10 @@ COAL = "coal"
 URANIUM_ORE = "uranium-ore"
 CRUDE_OIL = "crude-oil"
 
--- global state
-IN_MIDDLE_OF_ORE_PATCH_GEN = false; 
-BUILT_AREAS = {}; -- {{min_x, max_x, min_y, max_y},...}
-BUILT_POINTS = {} -- {{x,y},...}
-BUILDING_INDEX = 1;
+storage.IN_MIDDLE_OF_ORE_PATCH_GEN = false
+storage.BUILT_AREAS = {} -- {{min_x, max_x, min_y, max_y},...}
+storage.BUILT_POINTS = {} -- {{x,y},...}
+storage.BUILDING_INDEX = 1
 local BUILDINGS = {
     {blueprints.powerplant_1, blueprints.powerplant_2, blueprints.powerplant_3},
     -- smelters
@@ -188,7 +187,7 @@ end
 function try_and_track_build_blueprint(bp_string, surface, offset)
     local new_area = _get_bounding_box_for_blueprint(bp_string, surface, offset)
 
-    for _, area in pairs(BUILT_AREAS) do
+    for _, area in pairs(storage.BUILT_AREAS) do
         if _do_areas_intersect(new_area, area) then
             log("blocked area!")
             return false;
@@ -199,8 +198,8 @@ function try_and_track_build_blueprint(bp_string, surface, offset)
     print_table(offset, "  ")
 
     build_blueprint_from_string(bp_string, surface, offset);
-    table.insert(BUILT_AREAS, new_area);
-    table.insert(BUILT_POINTS, offset)
+    table.insert(storage.BUILT_AREAS, new_area)
+    table.insert(storage.BUILT_POINTS, offset)
     return true;
 
 end
@@ -284,7 +283,7 @@ function build_cities_in_chunk_generation(event)
 
     -- sparsity: min distance to other locations
     local min_dist = 150
-    for _, pt in pairs(BUILT_POINTS) do
+    for _, pt in pairs(storage.BUILT_POINTS) do
         if (position.x - pt.x)^2 + (position.y - pt.y)^2 < min_dist^2 then
             return
         end
@@ -297,13 +296,13 @@ function build_cities_in_chunk_generation(event)
     end
 
     -- build through the rotation of buildings
-    local which_variant_index = math.random(#BUILDINGS[BUILDING_INDEX])
-    local success = try_and_track_build_blueprint(BUILDINGS[BUILDING_INDEX][which_variant_index], surface, position);
+    local which_variant_index = math.random(#BUILDINGS[storage.BUILDING_INDEX])
+    local success = try_and_track_build_blueprint(BUILDINGS[storage.BUILDING_INDEX][which_variant_index], surface, position)
 
     if success then -- rotate to the next building
-        BUILDING_INDEX = BUILDING_INDEX + 1
-        if BUILDING_INDEX > #BUILDINGS then  -- damn zero indexing makes mod not work directly
-            BUILDING_INDEX = 1
+        storage.BUILDING_INDEX = storage.BUILDING_INDEX + 1
+        if storage.BUILDING_INDEX > #BUILDINGS then  -- damn zero indexing makes mod not work directly
+            storage.BUILDING_INDEX = 1
         end
     end
 
@@ -326,7 +325,7 @@ function build_mines_in_chunk_generation(event)
     end
 
     -- error checking done
-    IN_MIDDLE_OF_ORE_PATCH_GEN = true;  -- used to prevent multiple threads
+    storage.IN_MIDDLE_OF_ORE_PATCH_GEN = true  -- used to prevent multiple threads
 
     local ore_position = this_chunk_ores[1].position
     surface.request_to_generate_chunks(ore_position, 2);
@@ -368,17 +367,17 @@ function build_mines_in_chunk_generation(event)
     local direction = math.random(4)  -- [up, down, left, right]
     try_and_track_build_blueprint(possible_mines[mine_size][direction], surface, ore_center);
 
-    IN_MIDDLE_OF_ORE_PATCH_GEN = false;  -- let other threads resume
+    storage.IN_MIDDLE_OF_ORE_PATCH_GEN = false  -- let other threads resume
 end
 
 
-script.on_event(defines.events.on_chunk_generated, function(event) 
-    if IN_MIDDLE_OF_ORE_PATCH_GEN then
-        return;
+script.on_event(defines.events.on_chunk_generated, function(event)
+    if storage.IN_MIDDLE_OF_ORE_PATCH_GEN then
+        return
     end
 
-    build_mines_in_chunk_generation(event);
-    build_cities_in_chunk_generation(event);
+    build_mines_in_chunk_generation(event)
+    build_cities_in_chunk_generation(event)
 
 end)
 

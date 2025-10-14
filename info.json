@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "title": "Railroad Tycoon",
   "author": "Erik Schluntz",
-  "factorio_version": "1.1",
-  "dependencies": ["base >= 1.1", "Warehousing >= 0.5.7"],
+  "factorio_version": "2.0",
+  "dependencies": ["base >= 2.0", "Warehousing >= 0.5.7"],
   "description": "This mod starts many bases pre-created around the map, just waiting to be connected by rail!"
 }
