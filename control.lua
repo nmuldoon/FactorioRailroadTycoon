@@ -3,14 +3,16 @@ local blueprints = require("tycoon-blueprints")
 
 function print_table(t, indent)
     indent = indent or ''
+    if type(t) ~= 'table' then
+        log(indent .. tostring(t))
+        return
+    end
     for key, value in pairs(t) do
         if type(value) == 'table' then
             log(indent .. tostring(key) .. ':')
-            -- game.print(indent .. tostring(key) .. ':')
             print_table(value, indent .. '  ')
         else
             log(indent .. tostring(key) .. ': ' .. tostring(value))
-            -- game.print(indent .. tostring(key) .. ': ' .. tostring(value))
         end
     end
 end
@@ -209,6 +211,7 @@ function research_train_tech(player)
     if player and player.force then
         -- List of technologies to be researched
         local technologies = {
+            "steam-power",
             "automation",
             "logistics",
             "electronics",
@@ -271,7 +274,7 @@ function build_starter_base(surface)
     storehouse.insert{name="cliff-explosives", count=30}
     storehouse.insert{name="transport-belt", count=500}
     storehouse.insert{name="fast-inserter", count=100}
-    storehouse.insert{name="stack-filter-inserter", count=50}
+    storehouse.insert{name="stack-inserter", count=50} -- stack-filter-inserter removed in Factorio 2.0
     storehouse.insert{name="landfill", count=500}
 end
 
@@ -388,6 +391,9 @@ script.on_event(defines.events.on_player_created, function(event)
     -- positive X and Y are down and to the rights
     local player = game.players[event.player_index]
     local surface = player.surface
+
+    -- Show intro tip to the player
+    player.print("Welcome to Railroad Tycoon!\nTip: Start by crafting 50 iron plates by hand to research Steam Power and get pipes, then connect the boiler to a water source to start generating power. You'll also want to craft your first Lab with some iron plates.")
 
     -- start with basic stuff researched
     research_train_tech(player)
